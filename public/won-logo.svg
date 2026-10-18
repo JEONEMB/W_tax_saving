@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="260" viewBox="0 0 240 260" role="img" aria-label="WON">
+ <defs><linearGradient id="cyan"><stop stop-color="#00bce8"/><stop offset="1" stop-color="#b6fbfc"/></linearGradient><linearGradient id="blue" x2=".8" y2="1"><stop stop-color="#0734bf"/><stop offset="1" stop-color="#00229c"/></linearGradient></defs>
+ <path fill="url(#cyan)" d="M78 23h83v130H78a65 65 0 1 1 0-130Z"/>
+ <circle cx="158" cy="88" r="81" fill="url(#blue)"/>
+ <g fill="#0629b0"><path d="M10 187h29l14 39 13-39h26l13 39 14-39h29l-32 63H93l-14-37-14 37H41Z" transform="scale(.72 1)"/><path fill-rule="evenodd" d="M145 183a35 35 0 1 0 0 70 35 35 0 0 0 0-70Zm0 23a12 12 0 1 1 0 24 12 12 0 0 1 0-24Z"/><path d="M187 187h18l17 29v-29h18v63h-18l-17-29v29h-18Z"/></g>
+</svg>

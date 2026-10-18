@@ -1,0 +1,29 @@
+.workspace{grid-template-columns:minmax(230px,1fr) 440px 360px;gap:34px}
+.control-panel{max-height:95dvh;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#c4d1e1 transparent;padding:12px 12px 12px 0;overscroll-behavior:contain}
+.control-panel .panel-title{margin-bottom:18px}
+.control-panel .eyebrow,.control-panel .tag{font-size:12px}
+.control-panel .panel-description{font-size:14px;line-height:1.7;margin:12px 0}
+.scenario-assumption{font-size:12px;line-height:1.8;color:#657588;margin:0 0 18px;background:#e6eef7;padding:12px 14px;border-radius:12px}
+.control-panel .persona-list,.sheet .persona-list{gap:12px}
+.control-panel .persona-list>button,.sheet .persona-list>button{align-items:flex-start;padding:16px 13px;border:1px solid #e0e6ed;background:#ffffff70;border-radius:16px;gap:10px}
+.control-panel .persona-list>button.selected,.sheet .persona-list>button.selected{border-color:#84b4f5;background:#fff;box-shadow:0 2px 9px #397cc010}
+.control-panel .persona-number,.sheet .persona-number{font-size:13px;margin-top:3px;color:#6180a6}
+.control-panel .persona-list>button>.live-dot,.sheet .persona-list>button>svg,.control-panel .persona-list>button>svg{margin-top:8px}
+.control-panel .persona-list strong,.sheet .persona-list strong{font-size:16px;line-height:1.5;letter-spacing:-.45px;margin-bottom:5px}
+.control-panel .persona-list small,.sheet .persona-list small{font-size:12px;line-height:1.7;color:#718094}
+.scenario-outcome{display:flex;flex-direction:column;gap:6px;margin-top:13px;padding-top:12px;border-top:1px solid #e3eaf3;white-space:normal;word-break:keep-all;overflow-wrap:anywhere}
+.scenario-outcome-label{font-size:11px;color:#7b8fa8;font-weight:600}
+.scenario-action{font-size:13px;line-height:1.65;color:#40546b;font-weight:600}
+.scenario-effect{font-size:13px;line-height:1.65;color:#246ec6;font-weight:700}
+.scenario-note{font-size:11px;line-height:1.7;color:#6b7c8e}
+.control-panel .mode-select{font-size:13px;margin-top:22px}
+.control-panel .mode-select select{font-size:14px;min-height:46px}
+.control-panel .live-state{padding:19px}
+.control-panel .live-state h3{font-size:14px}
+.control-panel .live-state dl{font-size:13px}
+.control-panel .live-state small{font-size:12px;line-height:1.7;display:block}
+.control-panel .text-button{font-size:12px;min-height:36px}
+.control-panel .control-note{font-size:12px;line-height:1.6;align-items:flex-start}
+@media(min-width:1500px){.workspace{grid-template-columns:1fr 450px 370px;gap:40px}}
+@media(max-width:1260px) and (min-width:801px){.workspace{grid-template-columns:420px minmax(280px,360px);gap:24px;padding:24px;justify-content:center}.brand-panel{display:none}}
+@media(max-width:800px){.workspace{display:block;padding:0}.sheet .persona-list>button{padding:15px 12px}.sheet .scenario-assumption{font-size:12px}}
