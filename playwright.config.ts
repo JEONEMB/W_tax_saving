@@ -1,2 +1,2 @@
 import {defineConfig} from '@playwright/test';
-export default defineConfig({testDir:'./e2e',use:{baseURL:'http://127.0.0.1:5173',browserName:'chromium',channel:'msedge',viewport:{width:1440,height:1050}},webServer:{command:'npm.cmd run dev -- --port 5173',url:'http://127.0.0.1:5173',reuseExistingServer:true},workers:1});
+export default defineConfig({testDir:'./e2e',use:{baseURL:'http://127.0.0.1:5187',browserName:'chromium',channel:'msedge',viewport:{width:1440,height:1050}},webServer:{command:'node scripts/dev.mjs --port 5187 --strictPort',url:'http://127.0.0.1:5187',env:{WON_API_PORT:'8017',WON_DB_PATH:'backend/data/e2e.sqlite3'},reuseExistingServer:!process.env.CI},workers:1});

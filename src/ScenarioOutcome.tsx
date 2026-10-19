@@ -3,8 +3,8 @@ import {housingDeduction,pensionCredit,rentCredit} from './domain';
 // Fixed, standard demo outcomes; independent of the customer's edited/live state.
 const won=(amount:number)=>`${amount.toLocaleString('ko-KR')}원`;
 const outcomes:Record<string,{action:string;effect:string;note:string}>={
- 'grant-worker':{action:'급여·계좌 자료 정리 → 근로장려금 신청 준비',effect:'가구 소득·재산 확인 후 준비서 생성',note:'정부지원 · 지급액 미확정 · 공식 홈택스에서 직접 신청'},
- 'grant-parent':{action:'가구·부양자녀 확인 → 자녀장려금 신청 준비',effect:'은행 정보와 고객 응답을 신청 자료로 정리',note:'2025년 소득 기준 · 준비 완료와 공식 접수는 별개'},
+ 'grant-worker':{action:'추가 정보 조회 동의 → Agent 근로장려금 신청',effect:'신청서 자동 작성 · 모의 접수 결과 확인',note:'정부지원 · 지급액 미확정 · 실제 국세청 접수 없음'},
+ 'grant-parent':{action:'가구·부양자녀 조회 → Agent 자녀장려금 신청',effect:'신청 동의·인증 후 모의 접수까지 처리',note:'2025년 소득 기준 · 모의 접수번호 발급'},
  pension:{action:'기존 연금저축에 200만원 추가 납입',effect:`국세 세액공제 계산액 +${won(pensionCredit(5_000_000)-pensionCredit(3_000_000))}`,note:'신규 개설 없이 보유 계좌 활용'},
  'new-pension':{action:'연금저축계좌 개설 → 200만원 납입',effect:`국세 세액공제 계산액 ${won(pensionCredit(2_000_000))}`,note:'개설·납입 각각 동의 · 개설만으로 공제 없음'},
  investor:{action:'투자 목적에 맞는 ISA 계좌 개설',effect:'직접 주식 투자: 중개형 / 은행 운용: 신탁형',note:'개설만으로 절세액 발생 없음 · 기존 주식 이전 없음'},

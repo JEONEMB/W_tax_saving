@@ -1,0 +1,59 @@
+{
+  "version": "2026-10-19.mvp.2",
+  "taxYear": 2026,
+  "verifiedAt": "2026-10-17",
+  "scope": "원본 명세의 2026년 표준 시연 규칙. 실제 세무 판정 아님.",
+  "limits": {"rent":10000000,"rentSalary":80000000,"rentIncome":70000000,"lowSalary":55000000,"lowIncome":45000000,"housing":3000000,"housingSalary":70000000,"housingShared":4000000,"pension":6000000,"pensionCombined":9000000,"cardSalary":70000000,"cardLowCap":3000000,"cardHighCap":2500000},
+  "rates": {"rentLow":17,"rentHigh":15,"pensionLow":15,"pensionHigh":12,"housing":40,"cardThreshold":25,"credit":15,"debit":30},
+  "fields": {
+    "resident":{"label":"국내 거주자이며 본인 자료인가요?","type":"boolean"},
+    "incomeType":{"label":"소득 종류","type":"income"},
+    "grossSalary":{"label":"연간 총급여 (원)","type":"money"},
+    "aggregateIncome":{"label":"합산 종합소득금액 (원, 다른 소득 없음은 0)","type":"money"},
+    "standardEmployment":{"label":"해당 연도 내내 근로했나요?","type":"boolean"},
+    "standardHousehold":{"label":"미혼·무주택 세대주이며 연중 동일한 본인 명의 임대차인가요?","type":"boolean"},
+    "housingEligible":{"label":"주택 규모 또는 기준시가 요건을 확인했나요? (표준: 도시 85㎡ 이하 또는 4억원 이하)","type":"boolean"},
+    "addressMatch":{"label":"계약서와 주민등록 주소가 같은가요?","type":"boolean"},
+    "rentConfirmed":{"label":"이체 후보가 본인이 부담한 월세이며 관리비를 제외했나요?","type":"boolean"},
+    "claimRent":{"label":"확인된 월세에 세액공제를 적용할 계획인가요?","type":"boolean"},
+    "housingQualified":{"label":"연중 무주택 세대의 적격 세대주·배우자이고 본인 청약 납입·무주택확인 요건을 확인했나요?","type":"boolean"},
+    "housingPaid":{"label":"청약 적격 납입액 (원)","type":"money"},
+    "loanDeduction":{"label":"전세대출 원리금 소득공제액 (원)","type":"money"},
+    "otherPensionKnown":{"label":"타행을 포함한 연금저축·IRP·DC 본인 납입을 모두 확인했나요?","type":"boolean"},
+    "pensionPaid":{"label":"전 금융기관 연금저축 적격 납입액 (원)","type":"money"},
+    "irpPaid":{"label":"전 금융기관 IRP·DC 적격 본인 납입액 (원)","type":"money"},
+    "noChildren":{"label":"자녀 없는 일반 카드 공제 계산 대상인가요?","type":"boolean"},
+    "isaEligible":{"label":"ISA 연령·국내 거주·최근 3개 과세기간 금융소득종합과세 제외 요건을 확인했나요?","type":"boolean"},
+    "isaHeld":{"label":"이미 ISA 계좌를 보유하고 있나요?","type":"boolean"},
+    "budget":{"label":"추가 납입 가용 예산 (원)","type":"money"},
+    "liquid":{"label":"가용 예산은 가까운 시일에 사용할 생활비가 아닌가요?","type":"boolean"}
+  },
+  "benefits": [
+    {"id":"rent","title":"월세 세액공제","amountType":"national_tax_credit_calculation","unit":"국세 세액공제 계산액","sourceIds":["S14","S15","S30"],"required":["resident","incomeType","grossSalary","aggregateIncome","standardEmployment","standardHousehold","housingEligible","addressMatch","rentConfirmed","claimRent"],"conditions":[["resident",true,"ineligible"],["standardEmployment",true,"review_required"],["standardHousehold",true,"review_required"],["housingEligible",true,"ineligible"],["addressMatch",true,"ineligible"],["rentConfirmed",true,"ineligible"],["claimRent",true,"ineligible"]],"documents":["임대차계약서 확인","주민등록 주소 자료 확인","월세 이체내역 확인"],"nextAction":"월세 서류 3종을 준비하고 회사 연말정산 경로를 확인하세요.","provider":"회사·국세청"},
+    {"id":"housing","title":"청약 소득공제","amountType":"income_deduction","unit":"소득공제액","sourceIds":["S03","S19"],"required":["resident","incomeType","grossSalary","housingQualified","housingPaid","loanDeduction"],"conditions":[["resident",true,"ineligible"],["housingQualified",true,"ineligible"]],"documents":["무주택확인 요건 확인","청약 납입증명 자료 준비","전세대출 합산 한도 확인"],"nextAction":"기존 청약 계좌의 납입 자료와 무주택확인 요건을 확인하세요.","provider":"우리은행·회사"},
+    {"id":"pension","title":"연금계좌 세액공제","amountType":"national_tax_credit_calculation","unit":"국세 세액공제 계산액","sourceIds":["S18"],"required":["resident","incomeType","grossSalary","otherPensionKnown","pensionPaid","irpPaid"],"conditions":[["resident",true,"ineligible"],["otherPensionKnown",true,"needs_info"]],"documents":["전 금융기관 납입 자료 확인","이전액·퇴직금 제외 확인","유동성·중도해지 조건 확인"],"nextAction":"타행 납입을 포함한 한도와 가용 예산을 확인한 후 추가 납입을 비교하세요.","provider":"우리은행·타 금융기관"},
+    {"id":"card","title":"카드·현금영수증 소득공제","amountType":"income_deduction","unit":"소득공제액","sourceIds":["S08","S29","S30"],"required":["resident","incomeType","grossSalary","standardEmployment","noChildren"],"conditions":[["resident",true,"ineligible"],["standardEmployment",true,"review_required"],["noChildren",true,"review_required"]],"documents":["취소·환불·공제 제외분 확인","월세 중복 사용분 확인","간소화 사용액과 대조"],"nextAction":"예정된 소비의 결제 방식만 비교하세요. 추가 소비를 권하지 않아요.","provider":"우리카드·국세청"},
+    {"id":"sme","title":"중소기업 취업자 감면","amountType":"national_tax_reduction_review","unit":"감면액 계산 보류","sourceIds":["S21","S22"],"required":["incomeType"],"conditions":[],"documents":["회사 대상 업종·제외 근로자 확인","최초 적격 취업일·병역·나이 확인","기적용 감면·잔여 기간 확인"],"nextAction":"회사 담당자에게 감면 신청 여부와 대상 업종을 확인하세요. 이직해도 감면기간은 초기화되지 않아요.","provider":"회사·국세청"},
+    {"id":"isa","title":"ISA 정보 확인","amountType":"tax_exempt_limit","unit":"적격 순이익 비과세 한도 안내","sourceIds":["S10","S11"],"required":["resident","isaEligible","isaHeld"],"conditions":[["resident",true,"ineligible"],["isaEligible",true,"ineligible"]],"documents":["기존 ISA·가입 유형 확인","직전연도 소득·가입 또는 연장 시점 확인","금융소득종합과세 이력 확인"],"nextAction":"일반형 200만원·서민형/농어민형 400만원은 적격 순이익 기준입니다. 초과분 분리과세·의무가입기간 3년과 중도해지 조건을 공식 상품 안내에서 확인하세요. 은행 신탁형과 증권사 중개형은 다릅니다.","provider":"우리은행 신탁형·증권사 중개형"}
+  ],
+  "sources": {
+    "S03":{"label":"청약 소득공제 · 조세특례제한법 제87조","url":"https://www.law.go.kr/법령/조세특례제한법/제87조"},
+    "S08":{"label":"국세청 카드 사용액 공제 산식","url":"https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?cntntsId=7794&mi=6456"},
+    "S10":{"label":"우리은행 신탁형 ISA","url":"https://spot.wooribank.com/pot/Dream?withyou=IMISA0044"},
+    "S11":{"label":"ISA · 조세특례제한법 제91조의18","url":"https://www.law.go.kr/법령/조세특례제한법/제91조의18"},
+    "S14":{"label":"월세 · 조세특례제한법 제95조의2","url":"https://www.law.go.kr/법령/조세특례제한법/제95조의2"},
+    "S15":{"label":"월세 · 조세특례제한법 시행령 제95조","url":"https://www.law.go.kr/법령/조세특례제한법시행령/제95조"},
+    "S18":{"label":"국세청 연금계좌 세액공제","url":"https://d.nts.go.kr/nts/cm/cntnts/cntntsView.do?cntntsId=7875&mi=6439"},
+    "S19":{"label":"국세청 주택임차차입금 공제","url":"https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?cntntsId=239021"},
+    "S21":{"label":"국세청 중소기업 취업자 감면","url":"https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?cntntsId=239023"},
+    "S22":{"label":"감면 · 조세특례제한법 제30조","url":"https://www.law.go.kr/법령/조세특례제한법/제30조"},
+    "S29":{"label":"카드 공제 · 조세특례제한법 제126조의2","url":"https://www.law.go.kr/법령/조세특례제한법/제126조의2"},
+    "S30":{"label":"국세청 공제 제외 월세 서식","url":"https://www.law.go.kr/LSW/flDownload.do?bylClsCd=110202&flSeq=138213663&gubun="}
+  },
+  "catalog": [
+    {"id":"work-grant","title":"근로·자녀장려금","provider":"국세청","type":"정부지원금","status":"unknown","note":"소득연도·가구·재산 기준을 별도로 확인하세요. 홈택스 신청 경로이며 은행 가입상품이 아닙니다.","url":"https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?cntntsId=7783&mi=2446"},
+    {"id":"youth-tomorrow","title":"청년내일저축계좌","provider":"복지로·행정복지센터 → 하나은행","type":"정부 매칭 지원","status":"unknown","note":"2026년 안내상 중위소득 50% 이하 청년 중심. 현재 모집 여부는 새 공지 확인이 필요합니다.","url":"https://blog.bokjiro.go.kr/m/1829"},
+    {"id":"youth-leap","title":"청년도약계좌","provider":"우리은행","type":"정부기여금·비과세","status":"discontinued","note":"명세 기준 신규 판매종료. 기존 가입자 유지·전환 조건을 확인하세요.","url":"https://spot.wooribank.com/pot/jcc?PLM_PDCD=P010002512&PRD_CD=P010002512&PRD_YN=Y&__ID=c010358&pPRD_DSCD=01&withyou=PODEP0019"},
+    {"id":"youth-future","title":"청년미래적금","provider":"우리은행","type":"정부기여금·비과세","status":"dated","start":"2026-10-07","end":"2026-10-16","accountStart":"2026-11-16","accountEnd":"2026-11-27","note":"명세에 수록된 2026년 2차 일정입니다. 신청 마감 이후 계좌개설은 심사 통과자만 해당하며 다음 모집은 미정입니다.","url":"https://fsc.go.kr/po010104/87820"}
+  ]
+}

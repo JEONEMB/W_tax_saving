@@ -10,10 +10,10 @@ export default function BankHome({customer:c,onNavigate:go,onSelect}:{customer:C
    <div className="welcome-visual"><div className="glass-tile"><WonSymbol/></div><span className="visual-halo"/></div>
    <p className="welcome-eyebrow">내 금융을 이해하는 절세 Agent</p>
    <h1>내 모든 금융생활의 중심<br/>우리 WON <span>세금비서</span></h1>
-   <p className="welcome-description">나에게 맞는 절세·지원 혜택을 찾고<br/>동의한 실행까지 함께해요.</p>
+   <p className="welcome-description">은행이 알고 있는 내 정보로 혜택을 찾고<br/>필요한 순간에만 동의를 받을게요.</p>
    <div className="welcome-dots" aria-hidden="true"><b/><i/><i/></div>
-   <button className="primary welcome-start" aria-label="나의 절세 기회 확인하기" onClick={()=>go('discover')}>절세 시작하기 <ArrowRight size={19}/></button>
-   <button className="welcome-profile" onClick={onSelect}>{c.name}님 · {c.subtitle}<ChevronRight size={15}/></button>
+   <button className="primary welcome-start" aria-label="나의 절세 기회 확인하기" onClick={()=>go('discover')}><span>내 절세 혜택 찾기</span><ArrowRight size={19}/></button>
+   <p className="welcome-customer">{c.name}님의 고객·계좌 정보로 분석해요</p>
    <button className="welcome-down" aria-label="내 자산으로 이동" onClick={()=>document.getElementById('bank-assets')?.scrollIntoView({behavior:'smooth',block:'start'})}><ChevronDown size={25}/></button>
  </section>
  <section className="bank-assets" id="bank-assets">

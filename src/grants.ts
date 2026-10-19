@@ -1,7 +1,7 @@
-import type {Customer,Action} from './domain';
+import type {Customer,Action,Mode} from './domain';
 
 export type GrantKind='grant_work'|'grant_child';
-export interface GrantDraft {consent:boolean;step:number;answers:Record<string,string>;date:string;prepareConsent:boolean;payoutConfirmed:boolean;preparedId?:string;revision:number}
+export interface GrantDraft {consent:boolean;step:number;answers:Record<string,string>;date:string;prepareConsent:boolean;payoutConfirmed:boolean;preparedId?:string;revision:number;submitConsent?:boolean;authenticated?:boolean;submittedId?:string}
 export const GRANT_TITLES:Record<GrantKind,string>={grant_work:'근로장려금',grant_child:'자녀장려금'};
 export const GRANT_SOURCES={eligibility:'https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?cntntsId=7783&mi=2449',application:'https://in.nts.go.kr/nts/cm/cntnts/cntntsView.do?cntntsId=238977&mi=40397',hometax:'https://www.hometax.go.kr/'};
 export const GRANT_RULE_VERSION='2025-income.2026-10-17';
@@ -50,7 +50,7 @@ export function bankGrantData(c:Customer){
 export function updateGrant(c:Customer,b:GrantKind,patch:Partial<GrantDraft>):Customer{
  if(patch.consent===false)return revokeGrant(c,b);
  const d=getGrant(c,b);const material=['answers','date','consent','payoutConfirmed'].some(key=>key in patch);
- const next={...d,...patch,...(material?{revision:d.revision+1,preparedId:undefined,prepareConsent:false}:{} ),...(['answers','date','consent'].some(key=>key in patch)?{payoutConfirmed:false}:{})};
+ const next={...d,...patch,...(material?{revision:d.revision+1,preparedId:undefined,prepareConsent:false,submitConsent:false,authenticated:false}:{} ),...(['answers','date','consent'].some(key=>key in patch)?{payoutConfirmed:false}:{}),...(patch.submitConsent===false?{authenticated:false}:{})};
  let actions:Action[]=material?c.actions.map(a=>a.benefit===b&&a.kind==='grant_prepare'?{...a,status:'deferred',reportSnapshot:undefined,result:'정보 변경 · 신청 준비를 다시 확인해 주세요.'}:a):c.actions;
  if(patch.consent===true&&!actions.some(a=>a.benefit===b&&a.kind==='grant_prepare'))actions=[{id:crypto.randomUUID(),benefit:b,kind:'grant_prepare',amount:0,status:'draft',revision:next.revision,consent:true,externalConsent:false,authenticated:false,label:`${GRANT_TITLES[b]} 신청 준비`,provider:'앱 내 준비 · 국세청 직접 신청',created:new Date().toISOString(),result:'신청 준비 중 · 공식 접수 전'},...actions];
  return {...c,grants:{...c.grants,[b]:next},actions};
@@ -72,4 +72,23 @@ export function prepareGrant(c:Customer,b:GrantKind):Customer{
  const action:Action={id:prior?.id??crypto.randomUUID(),benefit:b,kind:'grant_prepare',amount:0,status:'success',revision:d.revision,consent:true,externalConsent:false,authenticated:false,label:`${GRANT_TITLES[b]} 신청 준비`,provider:'앱 내 준비 · 국세청 직접 신청',created:new Date().toISOString(),result:'신청 준비 완료 · 공식 접수 전',reportSnapshot:grantReport(c,b,d)};
  return {...c,actions:[action,...c.actions.filter(a=>a.id!==action.id)],grants:{...c.grants,[b]:{...d,preparedId:action.id,step:5}}};
 }
-export function revokeGrant(c:Customer,b:GrantKind):Customer{return {...c,grants:{...c.grants,[b]:newGrantDraft()},actions:c.actions.filter(a=>!(a.benefit===b&&a.kind==='grant_prepare'))}}
+export function revokeGrant(c:Customer,b:GrantKind):Customer{return {...c,grants:{...c.grants,[b]:newGrantDraft()},actions:c.actions.filter(a=>!(a.benefit===b&&['grant_prepare','grant_submit'].includes(a.kind)))}}
+
+export function submitGrant(c:Customer,b:GrantKind,mode:Mode):Customer{
+ const d=getGrant(c,b),evaluation=evaluateGrant(d,b);
+ const prior=c.actions.find(a=>a.benefit===b&&a.kind==='grant_submit'&&['success','unknown','running'].includes(a.status));
+ if(prior)return c;
+ if(!evaluation.canPrepare)throw new Error(evaluation.reason+' '+grantWindow(d.date).note);
+ if(!d.submitConsent||!d.authenticated)throw new Error('신청 내용에 대한 별도 동의와 인증이 필요해요.');
+ const id=crypto.randomUUID();
+ const status=mode==='delay'?'unknown':mode==='fail'?'failed':'success';
+ const receipt=[`WON ${GRANT_TITLES[b]} 모의 접수 내역`,`실제 국세청 전송·접수 없음`,`모의 접수 번호: SIM-${id.slice(0,8).toUpperCase()}`,`고객: ${c.name}`,`소득 귀속연도: 2025`,`신청 유형: ${grantWindow(d.date).label}`,`수령계좌: ${bankGrantData(c).account}`,`지급액: 심사 후 결정`].join('\n');
+ const action:Action={id,benefit:b,kind:'grant_submit',amount:0,status,revision:d.revision,approvedRevision:d.revision,consent:true,externalConsent:true,authenticated:true,label:`${GRANT_TITLES[b]} 신청`,provider:'국세청 연계 시뮬레이터',created:new Date().toISOString(),reportSnapshot:receipt,result:status==='success'?'모의 신청 접수 완료 · 심사 대기':status==='unknown'?'접수 응답 확인 중 · 중복 신청 차단':'모의 신청 실패 · 접수되지 않음'};
+ return {...c,actions:[action,...c.actions.filter(a=>!(a.benefit===b&&a.kind==='grant_prepare'))],grants:{...c.grants,[b]:{...d,submittedId:id}}};
+}
+export function resolveGrantSubmission(c:Customer,b:GrantKind):Customer{
+ const d=getGrant(c,b),a=c.actions.find(a=>a.id===d.submittedId&&a.kind==='grant_submit');
+ if(!a||a.status!=='unknown')return c;
+ const valid=d.revision===a.approvedRevision&&d.consent&&d.submitConsent&&d.authenticated&&evaluateGrant(d,b).canPrepare;
+ return {...c,actions:c.actions.map(row=>row.id===a.id?{...row,status:valid?'success':'failed',result:valid?'모의 신청 접수 완료 · 심사 대기':'정보 또는 동의 변경으로 미접수 · 재확인 필요'}:row)};
+}

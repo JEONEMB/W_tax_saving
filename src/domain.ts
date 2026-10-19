@@ -2,8 +2,9 @@ import {isGrant,GRANT_TITLES,GRANT_SOURCES,getGrant,evaluateGrant,type GrantDraf
 export type Benefit = 'pension'|'isa'|'housing'|'rent'|'card'|'sme'|GrantKind;
 export type Status = 'draft'|'awaiting_consent'|'ready'|'running'|'success'|'failed'|'unknown'|'cancelled'|'deferred';
 export type Mode = 'normal'|'fail'|'delay';
-export interface Account {id:string;kind:Benefit;name:string;balance:number;contributed:number}
-export interface Action {id:string;benefit:Benefit;kind:'open'|'deposit'|'report'|'grant_prepare';amount:number;status:Status;revision:number;approvedRevision?:number;consent:boolean;externalConsent:boolean;authenticated:boolean;label:string;provider:string;created:string;result?:string;accountId?:string;reportSnapshot?:string}
+export interface Account {id:string;kind:Benefit;name:string;balance:number;contributed:number;provider?:string}
+export interface TransactionReceipt {completedAt:string;accountId?:string;productName:string;balanceAfter?:number;cashAfter:number;contributedAfter?:number}
+export interface Action {id:string;benefit:Benefit;kind:'open'|'deposit'|'report'|'grant_prepare'|'grant_submit';amount:number;status:Status;revision:number;approvedRevision?:number;consent:boolean;externalConsent:boolean;authenticated:boolean;label:string;provider:string;created:string;result?:string;accountId?:string;reportSnapshot?:string;receipt?:TransactionReceipt}
 export interface Customer {id:string;name:string;title:string;subtitle:string;focus:Benefit;salary:number;cash:number;budget:number;accounts:Account[];answers:Record<string,string>;actions:Action[];readConsent:boolean;year:number;revision:number;grants?:Partial<Record<GrantKind,GrantDraft>>}
 export interface Question {key:string;label:string;options:[string,string][]}
 export const titles:Record<Benefit,string>={pension:'연금계좌',isa:'ISA',housing:'주택청약',rent:'월세 세액공제',card:'카드 소득공제',sme:'중소기업 취업 감면',...GRANT_TITLES};
@@ -109,9 +110,11 @@ export function executeAction(c:Customer,id:string,mode:Mode):Customer{
 }
 function settle(c:Customer,a:Action):Customer{
  let accounts=c.accounts;let cash=c.cash;let budget=c.budget;
- if(a.kind==='open')accounts=[...accounts,{id:`SIM-${a.id.slice(0,8)}`,kind:a.benefit,name:a.label.replace(' 개설',''),balance:0,contributed:0}];
+ if(a.kind==='open')accounts=[...accounts,{id:`SIM-${a.id.slice(0,8)}`,kind:a.benefit,name:a.benefit==='pension'?'우리 연금저축펀드':a.benefit==='housing'?'주택청약종합저축':a.label.replace(' 개설',''),balance:0,contributed:0,provider:a.provider}];
  if(a.kind==='deposit'){accounts=accounts.map(x=>x.id===a.accountId?{...x,balance:x.balance+a.amount,contributed:x.contributed+a.amount}:x);cash-=a.amount;budget-=a.amount;}
- return {...c,accounts,cash,budget,actions:c.actions.map(x=>x.id===a.id?{...x,status:'success',reportSnapshot:a.kind==='report'?reportText(c):undefined,result:a.kind==='report'?'샘플 증빙 준비 완료 · 실제 제출 전':a.kind==='open'?'모의 계좌 개설 완료 · 납입 및 투자 별도':'모의 납입 완료 · 투자 상품 매수 없음'}:x)};
+ const account=accounts.find(x=>x.id===(a.kind==='open'?`SIM-${a.id.slice(0,8)}`:a.accountId));
+ const receipt:TransactionReceipt={completedAt:new Date().toISOString(),accountId:account?.id,productName:account?.name||a.label,balanceAfter:account?.balance,cashAfter:cash,contributedAfter:account?.contributed};
+ return {...c,accounts,cash,budget,actions:c.actions.map(x=>x.id===a.id?{...x,status:'success',receipt,reportSnapshot:a.kind==='report'?reportText(c):undefined,result:a.kind==='report'?'샘플 증빙 준비 완료 · 실제 제출 전':a.kind==='open'?'모의 계좌 개설 완료 · 납입 및 투자 별도':'모의 납입 완료 · 투자 상품 매수 없음'}:x)};
 }
 export function getActionResult(c:Customer,id:string):Customer{const a=c.actions.find(x=>x.id===id);if(a?.status!=='unknown')return c;const error=guard(c,a);if(error)return {...c,actions:c.actions.map(x=>x.id===id?{...x,status:'failed',result:`모의 실행 미처리: ${error}`}:x)};return settle(c,a)}
 export function reportText(c:Customer){return `WON 세금비서 | 샘플 증빙 준비 보고서\n가상 고객: ${c.name}\n귀속연도: ${c.year}\n12개월 월세: 7,200,000원 (관리비 제외)\n`+Array.from({length:12},(_,i)=>`${i+1}월 | DEMO-RENT-${i+1} | 600,000원 | 샘플 이체`).join('\n')+`\n계약·주소 자료: ${c.answers.documents==='yes'?'샘플 확인':'미준비'}\n국세 세액공제 계산액: ${rentCredit(7_200_000,c.salary,c.answers.address)??'확인 필요'}\n공식 은행 증명서가 아닙니다. 회사 제출·세금 신고는 수행되지 않았습니다.`}
